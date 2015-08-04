@@ -1,0 +1,47 @@
+﻿@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Sourcery
+@{
+    ViewBag.Title = "title";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+}
+@model UpdateException
+<h2>There were some migration errors</h2>
+@{
+    <table class="zebra-striped">
+        @foreach (var ce in Model.CommandExceptions)
+        {
+            <tr>
+                <td>
+                    <h3>@ce.Name
+                        @if (ce.Command != null)
+                        {
+                            @ce.Command.Timestamp.ToString("f")
+                        }
+                    </h3>
+                    <small title="@ce.InnerException.ToString()">@ce.InnerException.Message</small>
+                    <pre>
+                   
+                            @{
+                                try
+                                {
+                                    @JObject.Parse(ce.Json)
+                                }
+                                catch (Exception ex)
+                                {
+                                    @ce.Json
+                                    @ex.ToString()
+                                }
+                            }
+                    </pre>
+                </td>
+                <td>
+                    <form action="@Url.Action("Delete", "EventStore", new { name = ce.Name })" method="POST">
+                    <input type="submit" class="btn" value="Delete Command" />
+                    </form>
+                </td>
+            </tr>
+        }
+    </table>
+}

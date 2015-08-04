@@ -1,0 +1,59 @@
+﻿@using Newtonsoft.Json.Linq
+@using Sourcery
+@using System.Collections.Generic
+@model Tuple<int, IEnumerable<Tuple<Command, string>>>
+<h2>Event History</h2>
+@{
+    <table class="zebra-striped bordered-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Hostname</th>
+                <th>Path</th>
+                <th>Action</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ce in Model.Item2)
+            {
+                var jo = JObject.Parse(ce.Item2);
+                
+                <tr>
+                    <td>@ce.Item1.Timestamp.ToString("f")
+                    </td>
+
+                    <td>
+                        @jo["Hostname"]
+                    </td>
+                    <td>
+                        @jo["Path"]
+                    </td>
+                    <td>@jo["Name"]
+                    </td>
+                    <td>@jo["CurrentUserId"]
+                    </td>
+                </tr>
+              
+                {
+                    {
+                <tr>
+                    <td colspan="5">
+                        <pre>@(jo.ToString())</pre>
+                    </td>
+                </tr> 
+                    }
+                }
+
+            }
+        </tbody>
+    </table>
+    <div class="pagination">
+        <ul>@*<li class="prev disabled"><a href="#">← Previous</a></li>*@
+            @for (int i = 1; (i * 10) < Model.Item1; i++)
+            {
+                <li @((Request.Params["page"] ?? "1") == i.ToString() ? "class=active" : "0")><a href="/eventstore/history?page=@i">@i</a></li>
+            }
+            @*<li class="next"><a href="#">Next →</a></li>*@ </ul>
+    </div>
+}
