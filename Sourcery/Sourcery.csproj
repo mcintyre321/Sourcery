@@ -81,9 +81,7 @@
     <Compile Include="IO\IRootDirectory.cs" />
     <Compile Include="IO\IDirectory.cs" />
     <Compile Include="IO\ZipFileSystem\ZipFileRootDirectory.cs" />
-    <Compile Include="IO\ZipFileSystem\ZipFileSystemFs.cs" />
     <Compile Include="IO\FileInfo.cs" />
-    <Compile Include="IO\FileSystem\FileSystemFs.cs" />
     <Compile Include="IO\Fs.cs" />
     <Compile Include="IO\ZipFileSystem\ZipFileSystemDirectoryInfo.cs" />
     <Compile Include="IO\ZipFileSystem\ZipFileSystemFileInfo.cs" />

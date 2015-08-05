@@ -7,22 +7,21 @@ namespace Sourcery.IO.FileSystem
 {
     public class FileSystemDirectoryInfo : IDirectory, IRootDirectory
     {
-        private readonly FileSystemFs _fs;
         private readonly System.IO.DirectoryInfo _directoryInfo;
 
-        public FileSystemDirectoryInfo(FileSystemFs fs, string path) : this(fs, new System.IO.DirectoryInfo(path))
+        public FileSystemDirectoryInfo(string path) : this(new System.IO.DirectoryInfo(path))
         {
         }
 
-        private FileSystemDirectoryInfo(FileSystemFs fs, System.IO.DirectoryInfo directoryInfo)
+        private FileSystemDirectoryInfo(System.IO.DirectoryInfo directoryInfo)
         {
-            _fs = fs;
             _directoryInfo = directoryInfo;
+            _directoryInfo.Create();
         }
 
         public IEnumerable<IDirectory> EnumerateDirectories(string fileName)
         {
-            return _directoryInfo.EnumerateDirectories().Select(di => new FileSystemDirectoryInfo(_fs, di));
+            return _directoryInfo.EnumerateDirectories().Select(di => new FileSystemDirectoryInfo(di));
         }
 
         public void Create()
@@ -35,22 +34,11 @@ namespace Sourcery.IO.FileSystem
             return _directoryInfo.EnumerateFiles().Select(fi => new FileSystemFileInfo(fi));
         }
 
-        public bool Exists
-        {
-            get { return _directoryInfo.Exists; }
-        }
+        public bool Exists => _directoryInfo.Exists;
 
-     
 
-        public string Name
-        {
-            get { return _directoryInfo.Name; }
-        }
-         
-        public Fs Fs
-        {
-            get { return _fs; }
-        }
+        public string Name => _directoryInfo.Name;
+
 
         public IDirectorySession OpenSession()
         {
@@ -64,7 +52,7 @@ namespace Sourcery.IO.FileSystem
 
         public IDirectory GetDirectoryInfo(string key)
         {
-            return new FileSystemDirectoryInfo(_fs, new DirectoryInfo(Path.Combine(_directoryInfo.FullName, key)));
+            return new FileSystemDirectoryInfo(new DirectoryInfo(Path.Combine(_directoryInfo.FullName, key)));
         }
 
         public class FileSystemDirectorySession : IDirectorySession

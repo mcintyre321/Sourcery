@@ -8,12 +8,10 @@ namespace Sourcery.IO.ZipFileSystem
 {
     public class ZipFileRootDirectory : IRootDirectory
     {
-        private readonly ZipFileSystemFs _fs;
         private readonly string _path;
 
-        public ZipFileRootDirectory(ZipFileSystemFs fs, string path)
+        public ZipFileRootDirectory(string path)
         {
-            _fs = fs;
             _path = path;
             Directory.CreateDirectory(path);
         }
@@ -21,7 +19,7 @@ namespace Sourcery.IO.ZipFileSystem
 
         public IEnumerable<IDirectory> EnumerateDirectories(string pattern)
         {
-            return new DirectoryInfo(_path).EnumerateFiles(pattern).Select(fi => new ZipFileSystemDirectoryInfo(_fs, this, fi.FullName));
+            return new DirectoryInfo(_path).EnumerateFiles(pattern).Select(fi => new ZipFileSystemDirectoryInfo(fi.FullName));
         }
 
         internal string FileName
@@ -29,15 +27,10 @@ namespace Sourcery.IO.ZipFileSystem
             get { return _path + ".zip"; }
         }
  
-        public Fs Fs
-        {
-            get { return _fs; }
-        }
- 
 
         public IDirectory GetDirectoryInfo(string key)
         {
-            return new ZipFileSystemDirectoryInfo(_fs, this, Path.Combine(_path, key + ".zip"));
+            return new ZipFileSystemDirectoryInfo(Path.Combine(_path, key + ".zip"));
         }
     }
 }

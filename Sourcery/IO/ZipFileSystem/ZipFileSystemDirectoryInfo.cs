@@ -9,18 +9,12 @@ namespace Sourcery.IO.ZipFileSystem
 {
     public class ZipFileSystemDirectoryInfo : IDirectory
     {
-        private readonly ZipFileSystemFs _fs;
-        private readonly ZipFileRootDirectory _parent;
         private readonly string _path;
 
-        public ZipFileSystemDirectoryInfo(ZipFileSystemFs fs, ZipFileRootDirectory parent, string path)
+        public ZipFileSystemDirectoryInfo(string path)
         {
-            _fs = fs;
-            _parent = parent;
             _path = path;
         }
-
-
 
 
         public void Create()
@@ -44,22 +38,12 @@ namespace Sourcery.IO.ZipFileSystem
             Replace("\\?", ".") + "$";
         }
 
-        public bool Exists
-        {
-            get { return File.Exists(_path); }
-        }
+        public bool Exists => File.Exists(_path);
 
 
-        public string Name
-        {
-            get { return Path.GetFileNameWithoutExtension(_path); }
-        }
+        public string Name => Path.GetFileNameWithoutExtension(_path);
 
 
-        public Fs Fs
-        {
-            get { return _fs; }
-        }
 
         public IDirectorySession OpenSession()
         {
@@ -96,7 +80,7 @@ namespace Sourcery.IO.ZipFileSystem
                     .Where(n => regex.IsMatch(Path.GetFileName(n)))
                     .Select(n => zip[n])
                     .Where(ze => ze.IsDirectory == false)
-                    .Select(z => new ZipFileSystemFileInfo(_zipFileSystemDirectoryInfo._fs, _zipFileSystemDirectoryInfo._path, z.FileName));
+                    .Select(z => new ZipFileSystemFileInfo(z.FileName));
             }
 
             public string ReadAllText(FileInfo fi)
