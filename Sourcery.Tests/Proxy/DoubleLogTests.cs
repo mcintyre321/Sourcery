@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using Sourcery.Db;
-using Sourcery.Proxy;
 
 namespace Sourcery.Tests.Proxy
 {

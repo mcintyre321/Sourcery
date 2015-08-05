@@ -1,18 +1,24 @@
+using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
 
 namespace Sourcery
 {
-    public class InitCommand
+    public class InitCommand : CommandBase
     {
-        public InitCommand()
+        public InitCommand(Gateway current)
+            :base(DateTimeOffset.Now, current)
         {
-            Gateway = new Gateway();
         }
 
-
         public string Type { get; set; }
-        public Gateway Gateway { get; set; }
+        protected override object Invoke(object target)
+        {
+            return null;
+        }
 
         public JArray Arguments { get; set; }
+
+        
     }
 }

@@ -1,24 +1,39 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Sourcery.EventStores;
 
 namespace Sourcery.Migrations
 {
     public abstract class Migration
     {
-        public void Transform(JObject jsonObject)
+        public void Transform(SourceryEvent @event, bool isInit)
         {
-            var original = jsonObject.DeepClone();
-            DoTransform(jsonObject);
-            jsonObject["_previous"] = original;
-            jsonObject["_version"] = Id;
+            var newJsonContent = TransformRawJson(@event.Content);
+            var obj = JObject.Parse(newJsonContent);
+            if (isInit == false)
+            {
+                obj = DoTransform(obj);
+                obj["_previous"] = JObject.Parse(@event.Content);
+            }
+            @event.Version = VersionNumber;
+            @event.Content = obj.ToString(Formatting.Indented);
+        }
+        protected virtual string TransformRawJson(string rawJson)
+        {
+            return rawJson;
+        }
+        protected virtual JObject DoTransform(JObject jsonObject)
+        {
+            return jsonObject;
         }
 
-        protected abstract void DoTransform(JObject jsonObject);
-
-        public abstract int Id { get; }
+        public abstract int VersionNumber { get; }
 
         public virtual string FriendlyFileName
         {
             get { return this.GetType().Name; }
         }
+
+        
     }
 }

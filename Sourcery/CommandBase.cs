@@ -6,7 +6,7 @@ namespace Sourcery
     {
         public DateTimeOffset Timestamp { get; set; }
         public int _version { get; set; }
-
+        public object Context { get; set; }
         public CommandBase(DateTimeOffset timestamp, Gateway gateway)
             : this()
         {
@@ -25,9 +25,10 @@ namespace Sourcery
             get { return ""; }
         }
 
+
         public object Apply(object target)
         {
-            using (ThreadScoper.Use(this.Gateway))
+            using (new PushScope<Gateway>(Gateway.Stack, this.Gateway))
             {
                 return Invoke(target);
             }

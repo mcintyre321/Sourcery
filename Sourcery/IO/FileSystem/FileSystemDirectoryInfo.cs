@@ -57,6 +57,11 @@ namespace Sourcery.IO.FileSystem
             return new FileSystemDirectorySession(this);
         }
 
+        public void Delete()
+        {
+            Directory.Delete(_directoryInfo.FullName, true);
+        }
+
         public IDirectory GetDirectoryInfo(string key)
         {
             return new FileSystemDirectoryInfo(_fs, new DirectoryInfo(Path.Combine(_directoryInfo.FullName, key)));
@@ -76,6 +81,11 @@ namespace Sourcery.IO.FileSystem
                 if (_fileSystemDirectoryInfo._directoryInfo.EnumerateFiles("*.prev").Any())
                     throw new Exception(fileSystemDirectoryInfo.Name + " contains .prev files indicating that a save went wrong! needs cleanup");
                 
+            }
+            public int Count(string searchPattern)
+            {
+                return EnumerateFiles(searchPattern).Count();
+
             }
 
             public void Dispose()
@@ -114,6 +124,18 @@ namespace Sourcery.IO.FileSystem
             {
                 return File.ReadAllText(Path.Combine(_fileSystemDirectoryInfo._directoryInfo.FullName, fi.Name));
             }
+
+            public void Delete()
+            {
+
+                _fileSystemDirectoryInfo.DeleteFiles();
+            }
+        }
+
+        private void DeleteFiles()
+        {
+            _directoryInfo.Delete(true);
+
         }
     }
 }

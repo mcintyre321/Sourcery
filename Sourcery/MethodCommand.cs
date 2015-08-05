@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
+using Expression = System.Linq.Expressions.Expression;
 
 namespace Sourcery
 {
@@ -13,14 +16,77 @@ namespace Sourcery
         public string[] Path { get; set; }
         public string TypeName { get; set; }
 
-        public MethodCommand(string typeName, string methodName, object[] arguments, string[] path)
+        internal static MethodCommand CreateFromLambda<T>(Expression<Action<T>> exp, object context = null)
+        {
+            var mce = (MethodCallExpression)exp.Body;
+
+            var args = mce.Arguments
+                .Select(GetValueFromExpression)
+                .ToArray();
+
+            var path = new List<string>();
+            var propertyExpression = ((MethodCallExpression)exp.Body).Object as MemberExpression;
+            while (propertyExpression != null)
+            {
+                path.Add(propertyExpression.Member.Name);
+                propertyExpression = propertyExpression.Expression as MemberExpression;
+            }
+
+            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name, args, path.ToArray());
+        }
+        public static MethodCommand CreateFromLambda<T, TOut>(Expression<Func<T, TOut>> exp, object context = null)
+        {
+            var mce = (MethodCallExpression)exp.Body;
+
+            var args = mce.Arguments
+                .Select(GetValueFromExpression)
+                .ToArray();
+
+            var path = new List<string>();
+            var propertyExpression = ((MethodCallExpression)exp.Body).Object as MemberExpression;
+            while (propertyExpression != null)
+            {
+                path.Add(propertyExpression.Member.Name);
+                propertyExpression = propertyExpression.Expression as MemberExpression;
+            }
+
+            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name , args, path.ToArray() );
+        }
+
+
+        static object GetValueFromExpression(Expression exp)
+        {
+            var constant = exp as ConstantExpression;
+            if (constant != null)
+            {
+                return constant.Value;
+            }
+            var memberAccess = exp as MemberExpression;
+            if (memberAccess != null)
+            {
+                var constantSelector = (ConstantExpression)memberAccess.Expression;
+                return ((dynamic)memberAccess.Member).GetValue(constantSelector.Value);
+            }
+            throw new NotImplementedException();
+        }
+        public MethodCommand(Type type, string methodName, object[] arguments, string[] path, object context = null)
+            : this(type.AssemblyQualifiedName, methodName, arguments, path, context)
+        {
+        }
+
+        public MethodCommand(string typeName, string methodName, object[] arguments, string[] path, object context = null)
             : base(DateTimeOffset.UtcNow, Gateway.Current)
         {
             TypeName = typeName;
             MethodName = methodName;
             Arguments = arguments;
             Path = path;
+            this.Context = context;
         }
+        
+
+
+        public object Context { get; set; }
 
 
         public MethodCommand()

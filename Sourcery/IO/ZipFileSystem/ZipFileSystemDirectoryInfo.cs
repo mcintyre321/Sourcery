@@ -108,10 +108,27 @@ namespace Sourcery.IO.ZipFileSystem
                 }
             }
 
+            public void Delete()
+            {
+                this._zipFileSystemDirectoryInfo.Delete();
+            }
+
+            public int Count(string searchPattern)
+            {
+                return EnumerateFiles(searchPattern).Count();
+
+            }
+
+
             public void Dispose()
             {
                 zip.Dispose();
             }
+        }
+
+        public void Delete()
+        {
+            File.Delete(_path);
         }
     }
 }

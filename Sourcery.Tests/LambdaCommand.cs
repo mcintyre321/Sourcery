@@ -1,23 +1,27 @@
+//using System;
+//using System.Linq.Expressions;
+//using MetaLinq;
+
 using System;
 using System.Linq.Expressions;
-using ExpressionBuilder;
+using MetaLinq;
 
 namespace Sourcery.Tests
 {
     [Serializable]
-    public class LambdaCommand<T> :CommandBase where T:class
+    public class LambdaCommand<T> : CommandBase where T : class
     {
         public EditableExpression Action { get; set; }
-        public LambdaCommand(Expression<Action<T>> action):this()
+        public LambdaCommand(Expression<Action<T>> action) : this()
         {
             this.Action = EditableExpression.CreateEditableExpression(action);
         }
-        public LambdaCommand(){} 
+        public LambdaCommand() { }
 
 
         protected override object Invoke(object o)
         {
-            return ((LambdaExpression) Action.ToExpression()).Compile().DynamicInvoke(o);
+            return ((LambdaExpression)Action.ToExpression()).Compile().DynamicInvoke(o);
         }
     }
 }

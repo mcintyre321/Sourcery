@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,12 @@ namespace Sourcery.Db
     public class SourceryDb
     {
         ConcurrentDictionary<string, ISourcerer> sourcerers = new ConcurrentDictionary<string, ISourcerer>();
+        Hashtable initCommandTypes = new Hashtable();
+
+        public void SetInitCommand<T, TInitCommand>()
+        {
+            initCommandTypes.Add(typeof(T), typeof(TInitCommand));
+        }
         private Fs _fs;
         private MigrationsLibrary _migrationsLib;
 
@@ -37,7 +44,8 @@ namespace Sourcery.Db
 
         public ISourcerer<T> Get<T>(string objectid, object[] arguments = null, Action<T> onRebuild = null) where T : class
         {
-            return (ISourcerer<T>)sourcerers.GetOrAdd(objectid, (s) => new Sourcerer<T>(GetEventStore(s), arguments, Migrations, onRebuild));
+            var initCommandType = initCommandTypes[typeof (T)] as Type;
+            return (ISourcerer<T>)sourcerers.GetOrAdd(objectid, (s) => new Sourcerer<T>(GetEventStore(s), arguments, Migrations, onRebuild, initCommandType));
         }
         
         public bool Exists(string objectid)
@@ -65,4 +73,6 @@ namespace Sourcery.Db
 
         }
     }
+
+    
 }

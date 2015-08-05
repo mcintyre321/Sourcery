@@ -11,11 +11,4 @@ namespace Sourcery
             return new DummyDisposable();
         }
     }
-
-    class DummyDisposable : IDisposable
-    {
-        public void Dispose()
-        {
-        }
-    }
 }

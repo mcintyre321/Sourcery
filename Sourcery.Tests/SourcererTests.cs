@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Sourcery.Db;
 using Sourcery.EventStores;
+using Sourcery.IO;
+using FileInfo = Sourcery.IO.FileInfo;
 
 namespace Sourcery.Tests
 {
@@ -24,17 +26,18 @@ namespace Sourcery.Tests
         [Test]
         public void CanPersistAnObject()
         {
-            var db = new SourceryDb();
+            var fac = new InMemEventStoreFactory();
+
+            var db = new SourceryDb(fac.Get);
             var sourcerer = db.Get<Egg>("Eggs");
-            var eggCommand = new LambdaCommand<Egg>(e => e.CrackIt());
 
             Assert.False(sourcerer.ReadModel.IsCracked);
-            sourcerer.ApplyCommandAndLog(eggCommand);
+            sourcerer.ApplyCommandAndLog(e => e.CrackIt());
 
             Assert.True(sourcerer.ReadModel.IsCracked);
 
 
-            var sourcerer2 = new SourceryDb().Get<Egg>("Eggs");
+            var sourcerer2 = new SourceryDb(fac.Get).Get<Egg>("Eggs");
             Assert.True(sourcerer2.ReadModel.IsCracked);
         }
 
@@ -58,13 +61,14 @@ namespace Sourcery.Tests
         [Test]
         public void CanPersistAnObjectWithAConstructor()
         {
-            var db = new SourceryDb();
+            var fac = new InMemEventStoreFactory();
+            var db = new SourceryDb(fac.Get);
             var sourcerer = db.Get<Book>("Book", new object[] { "Catch 22", Book.BookTypes.WarComedy });
 
             Assert.AreEqual("Catch 22", sourcerer.ReadModel.Title);
 
 
-            var sourcerer2 = new SourceryDb().Get<Book>("Book");
+            var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
             Assert.AreEqual("Catch 22", sourcerer2.ReadModel.Title);
         }
 
@@ -83,42 +87,53 @@ namespace Sourcery.Tests
         [Test]
         public void ReturnsNullWhenNoObjectIdMatch()
         {
-            var sourceryDb = new SourceryDb();
+            var fac = new InMemEventStoreFactory();
+            var sourceryDb = new SourceryDb(fac.Get);
             Assert.IsFalse(sourceryDb.Exists("objectId"));
         }
         [Test]
         public void ReturnsSomethingOnceAnEventHasBeenLogged()
         {
-            var sourceryDb = new SourceryDb();
-            sourceryDb.Get<Egg>("objectId").ApplyCommandAndLog(new LambdaCommand<Egg>(e => e.CrackIt()));
+            var fac = new InMemEventStoreFactory();
+            var sourceryDb = new SourceryDb(fac.Get);
+            sourceryDb.Get<Egg>("objectId").ApplyCommandAndLog(e => e.CrackIt());
             Assert.IsTrue(sourceryDb.Exists("objectId"));
         }
 
         [Test]
         public void ReturnsObjectWhenObjectIdMatches()
         {
-            var sourceryDb = new SourceryDb();
+            //Given an eventstore factgory
+            var fac = new InMemEventStoreFactory();
+            var sourceryDb = new SourceryDb(fac.Get);
+            //And that eventstore factory contains an entity
             var egg = sourceryDb.Get<Egg>("egg1");
-            egg.ApplyCommandAndLog(new LambdaCommand<Egg>(e => e.CrackIt()));
+            //And that aggregate has had a command applied
+            egg.ApplyCommandAndLog(e => e.CrackIt());
 
-            var sourceryDb2 = new SourceryDb();
+            //When a second sourcerydb is based on the eventstorefactory
+            var sourceryDb2 = new SourceryDb(fac.Get);
+            //And the aggregate is retreived
             var egg2 = sourceryDb2.Get<Egg>("egg1");
+            //Then the command should have been applied
             Assert.IsTrue(egg2.ReadModel.IsCracked);
         }
 
         [Test]
         public void SameInstancesAreReturnedByDifferentGets()
         {
-            var sourceryDb = new SourceryDb();
+            var fac = new InMemEventStoreFactory();
+            var sourceryDb = new SourceryDb(fac.Get);
             var egg = sourceryDb.Get<Egg>("egg1");
-            egg.ApplyCommandAndLog(new LambdaCommand<Egg>(e => e.CrackIt()));
+            egg.ApplyCommandAndLog(e => e.CrackIt());
             var egg2 = sourceryDb.Get<Egg>("egg1");
             Assert.AreSame(egg.ReadModel, egg2.ReadModel);
         }
         [Test]
         public void SameInstancesAreReturnedBySourcere()
         {
-            var sourceryDb = new SourceryDb();
+            var fac = new InMemEventStoreFactory();
+            var sourceryDb = new SourceryDb(fac.Get);
             var egg = sourceryDb.Get<Egg>("egg1");
             var egg2 = sourceryDb.Get<Egg>("egg1");
             Assert.AreSame(egg.ReadModel, egg2.ReadModel);
@@ -127,5 +142,89 @@ namespace Sourcery.Tests
 
     }
 
-    
+    internal class InMemDirectory : SortedDictionary<string, object>, IDirectory
+    {
+        public void Create()
+        {
+        }
+
+        public string Name { get; }
+        public IDirectorySession OpenSession()
+        {
+            return new InMemDirectorySession(this);
+        }
+
+        public void Delete()
+        {
+        }
+
+    }
+
+    internal class InMemDirectorySession : IDirectorySession
+    {
+        private readonly InMemDirectory _parent;
+        List<Action> changes = new List<Action>(); 
+        public InMemDirectorySession(InMemDirectory parent)
+        {
+            _parent = parent;
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public void Write(string filename, string content)
+        {
+            changes.Add(() => _parent[filename] = content);
+        }
+
+        public void Save()
+        {
+            foreach (var change in changes)
+            {
+                change();
+            }
+            changes.Clear();
+        }
+
+        public IEnumerable<FileInfo> EnumerateFiles(string searchPattern)
+        {
+            var regex = new Regex(WildcardToRegex(searchPattern), RegexOptions.IgnoreCase);
+            return _parent.Keys.Cast<string>()
+                .Select(k => new InMemFileInfo(k))
+                .Where(fi => regex.IsMatch(fi.Name));
+        }
+
+        public string ReadAllText(FileInfo fi)
+        {
+            return _parent[fi.Name] as string;
+        }
+
+        public void Delete()
+        {
+            _parent.Clear();
+        }
+        public static string WildcardToRegex(string pattern)
+        {
+            return "^" + Regex.Escape(pattern)
+                              .Replace(@"\*", ".*")
+                              .Replace(@"\?", ".")
+                       + "$";
+        }
+
+        public int Count(string searchPattern)
+        {
+            return EnumerateFiles(searchPattern).Count();
+        }
+    }
+
+    internal class InMemFileInfo : FileInfo
+    {
+        public InMemFileInfo(string name)
+        {
+            Name = name;
+        }
+
+        public override string Name { get;  }
+    }
 }

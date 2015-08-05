@@ -1,21 +1,21 @@
 using System;
+using Sourcery.EventStores;
 
 namespace Sourcery
 {
     public sealed class RebuildException : Exception
     {
-        public RebuildException(Exception ex) : base("Error rebuilding:" + ex.Message, ex)
+        public RebuildException(Exception ex, SourceryEvent @event)
+            : base(MakeMessage(@event.Index.ToString(), ex, @event.Content), ex)
         {
+            Event = @event;
         }
 
-        public CommandBase Command { get; set; }
+        private static string MakeMessage(string name, Exception inner, string json)
+        {
+            return string.Format("Error rebuilding command '{0}' - {1}\r\nContent: \r\n{2}\r\n", name, inner.Message, json);
+        }
 
-        public string Name { get; set; }
-
-        public string Json { get; set; }
-
-        public ISourcerer Sourcerer { get; set; }
-
-        public object Model { get; set; }
+        public SourceryEvent Event { get; private set; }
     }
 }

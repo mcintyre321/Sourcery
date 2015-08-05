@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Sourcery
 {
+    
+
     public class Gateway
     {
-        public static Gateway Current
-        {
-            get { return ThreadScoper.Count<Gateway>() == 0 ? null : ThreadScoper.Peek<Gateway>(); }
-        }
+        public static AsyncLocal<Stack<Gateway>> Stack { get; } = new AsyncLocal<Stack<Gateway>>();
+         
+
+        public static Gateway Current { get { return Stack.Value.Peek(); } }
 
         [JsonIgnore]
         Hashtable Cache { get; set; }
@@ -21,11 +24,11 @@ namespace Sourcery
         }
 
 
-        public JArray Results { get; set; }
+        public JObject Results { get; set; }
 
         public Gateway()
         {
-            Results = new JArray();
+            Results = new JObject();
             Cache = new Hashtable();
         }
 
@@ -52,54 +55,29 @@ namespace Sourcery
         }
 
         private static JsonSerializer serializer = JsonSerializer.Create(new CustomSerializerSettings());
-        public T Execute<T>(string identifier, Func<T> a)
+
+        public T Execute<T>(string key, Func<T> a)
         {
-            if (string.IsNullOrWhiteSpace(identifier))
+            if (string.IsNullOrWhiteSpace(key))
                 throw new InvalidOperationException("Must provide identifier to gateway so logged command has context");
             if (ResultCounter == null)
             {
-                var obj = new JObject();
-                obj["key"] = identifier;
-                var result = a();
-                obj["value"] = JToken.FromObject(result, serializer);
-                Results.Add(obj);
-                return result;
+                var existing = Results[key];
+                if (existing != null) return existing.ToObject<T>();
+                var o = a();
+                Results.Add(key, o == null ? null : JToken.FromObject(o, serializer));
+                return o;
             }
             else
             {
-                var data = Results[ResultCounter++];
-                
-                var gatewayKey = data["key"].Value<string>();
-                if (gatewayKey != identifier)
-                {
-                    throw new GatewayMismatchException(requestedKey: identifier, foundKey: gatewayKey,
-                                                       foundValue: data["value"], desiredType: typeof(T));
-                }
-                var foundValue = data["value"].ToObject<T>(serializer);
+                var data = Results[key];
+
+                var foundValue = data.ToObject<T>(serializer);
 
                 return foundValue;
             }
         }
 
         public int? ResultCounter { private get; set; }
-    }
-
-    public class GatewayMismatchException : Exception
-    {
-        public string RequestedKey { get; private set; }
-        public string FoundKey { get; private set; }
-        public JToken  FoundValue { get; private set; }
-        public Type DesiredType { get; private set; }
-
-        public GatewayMismatchException(string requestedKey, string foundKey, JToken foundValue, Type desiredType)
-
-            : base("Looked for '" + requestedKey + "', found '" + foundKey + "'")
-        {
-            this.RequestedKey = requestedKey;
-            this.FoundKey = foundKey;
-            this.FoundValue = foundValue;
-            DesiredType = desiredType;
-        }
-
     }
 }
