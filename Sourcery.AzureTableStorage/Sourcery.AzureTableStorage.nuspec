@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>Sourcery.AzureTableStorage</title>
+    <authors>Harry McIntyre</authors>
+    <owners>Harry McIntyre</owners>
+    <licenseUrl>https://github.com/mcintyre321/Sourcery/blob/master/License.txt</licenseUrl>
+    <projectUrl>https://github.com/mcintyre321/Sourcery</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      Store your SourceryDb events on Azure table storage
+    </description>
+    <copyright>Copyright 2015</copyright>
+    <tags>Event Sourcing, database, Azure Table Storage</tags>
+    <dependencies>
+      <dependency id="Sourcery" version="$version$" />
+    </dependencies>
+  </metadata>
+</package>
