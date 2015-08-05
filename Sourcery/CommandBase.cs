@@ -18,7 +18,7 @@ namespace Sourcery
         {
             Gateway = new Gateway();
         }
-        public Gateway Gateway { get; private set; }
+        public Gateway Gateway { get; set; }
 
         public virtual string ShortDescriptionForFilename
         {

@@ -21,24 +21,14 @@ namespace Sourcery
 
         class InternalContractResolver : DefaultContractResolver
         {
-            //public override JsonContract ResolveContract(System.Type type)
-            //{
-            //    var c = base.ResolveContract(type);
-
-            //    `if (c.UnderlyingType.Name.EndsWith("Proxy")) c.UnderlngType = c.UnderlyingType.BaseType;
-            //    return c;
-            //}
-            protected override JsonObjectContract CreateObjectContract(System.Type objectType)
-            {
-                var jsonObjectContract = base.CreateObjectContract(objectType);
-                if (objectType.Name.EndsWith("Proxy")) jsonObjectContract.CreatedType = objectType.BaseType;
-                return jsonObjectContract;
-            }
+             
 
             protected override List<MemberInfo> GetSerializableMembers(Type objectType)
             {
+                var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
                 return
-                    (objectType).GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    (objectType.GetProperties(bindingFlags)).Cast<MemberInfo>()
+                    .Concat(objectType.GetFields(bindingFlags))
                         .ToList();
             }
         }
