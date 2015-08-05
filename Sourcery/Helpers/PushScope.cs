@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Sourcery
+namespace Sourcery.Helpers
 {
-    class PushScope<T> : IDisposable{
+    public class PushScope<T> : IDisposable{
         private Stack<T> stack;
 
         public PushScope(AsyncLocal<Stack<T>> asyncLocal, T instance)

@@ -75,6 +75,7 @@
     <Compile Include="EventStores\SourceryEvent.cs" />
     <Compile Include="EventStores\IEventStoreSession.cs" />
     <Compile Include="GatewayMismatchException.cs" />
+    <Compile Include="Helpers\PushScope.cs" />
     <Compile Include="InitCommand.cs" />
     <Compile Include="IO\FileSystem\FileSystemDirectoryInfo.cs" />
     <Compile Include="IO\FileSystem\FileSystemFileInfo.cs" />
@@ -93,7 +94,6 @@
     <Compile Include="Migrations\Migration.cs" />
     <Compile Include="Migrations\MigrationResult.cs" />
     <Compile Include="Migrations\CodeMigrationsLibrary.cs" />
-    <Compile Include="PushScope.cs" />
     <Compile Include="RecurseExtension.cs" />
     <Compile Include="SourcererExtensions.cs" />
     <Compile Include="SourceryDb.cs" />

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sourcery;
 using Sourcery.EventStores;
+using Sourcery.Helpers;
 using Sourcery.IO;
 using Sourcery.Migrations;
 
