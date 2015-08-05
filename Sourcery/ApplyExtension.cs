@@ -6,15 +6,15 @@ namespace Sourcery
 {
     public static class ApplyExtension
     {
-        public static TOut ApplyCommandAndLog<T, TOut>(this ISourcerer<T> sourcerer, Expression<Func<T, TOut>> action)
+        public static TOut ApplyCommandAndLog<T, TOut>(this ISourcedObject<T> sourcedObject, Expression<Func<T, TOut>> action)
         {
-            return (TOut) sourcerer.ApplyCommandAndLog(MethodCommand.CreateFromLambda(action));
+            return (TOut) sourcedObject.ApplyCommandAndLog(MethodCommand.CreateFromLambda(action));
         }
-        public static void ApplyCommandAndLog<T>(this ISourcerer<T> sourcerer, Expression<Action<T>> action)
+        public static void ApplyCommandAndLog<T>(this ISourcedObject<T> sourcedObject, Expression<Action<T>> action)
         {
             using (new PushScope<Gateway>(Gateway.Stack, new Gateway()))
             {
-                sourcerer.ApplyCommandAndLog(MethodCommand.CreateFromLambda(action));
+                sourcedObject.ApplyCommandAndLog(MethodCommand.CreateFromLambda(action));
             }
         }
         //private static KeyValuePair<Type, object>[] ResolveArgs<T>(Expression<Func<T, object>> expression)

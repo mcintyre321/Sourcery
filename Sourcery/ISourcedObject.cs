@@ -5,7 +5,7 @@ using Sourcery.Migrations;
 
 namespace Sourcery
 {
-    public interface ISourcerer
+    public interface ISourcedObject
     {
         object ReadModel { get; }
         IEventStore EventStore { get; }

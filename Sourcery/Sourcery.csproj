@@ -89,7 +89,7 @@
     <Compile Include="IO\Fs.cs" />
     <Compile Include="IO\ZipFileSystem\ZipFileSystemDirectoryInfo.cs" />
     <Compile Include="IO\ZipFileSystem\ZipFileSystemFileInfo.cs" />
-    <Compile Include="ISourcerer.cs" />
+    <Compile Include="ISourcedObject.cs" />
     <Compile Include="JTokenExtension.cs" />
     <Compile Include="MethodCommand.cs" />
     <Compile Include="Migrations\DoubledUpMigrationsException.cs" />

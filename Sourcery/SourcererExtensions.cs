@@ -5,15 +5,15 @@ namespace Sourcery
 {
     public static class SourcererExtensions
     {
-        private static readonly ConditionalWeakTable<object, ISourcerer> SourcererLookup = new ConditionalWeakTable<object, ISourcerer>();
-        internal static T SetSourcerer<T>(this T t, ISourcerer<T> sourcerer)
+        private static readonly ConditionalWeakTable<object, ISourcedObject> SourcererLookup = new ConditionalWeakTable<object, ISourcedObject>();
+        internal static T SetSourcerer<T>(this T t, ISourcedObject<T> sourcedObject)
         {
-            SourcererLookup.Add(t, sourcerer);
+            SourcererLookup.Add(t, sourcedObject);
             return t;
         }
-        public static ISourcerer<T> Sourcerer<T>(this T o)
+        public static ISourcedObject<T> Sourcerer<T>(this T o)
         {
-            return (ISourcerer<T>)SourcererLookup.GetValue(o, k => null);
+            return (ISourcedObject<T>)SourcererLookup.GetValue(o, k => null);
         }
         
 

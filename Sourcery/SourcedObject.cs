@@ -14,7 +14,7 @@ using Sourcery.Migrations;
 namespace Sourcery
 {
 
-    public class SourcedObject<T> : ISourcerer<T> where T : class
+    public class SourcedObject<T> : ISourcedObject<T> where T : class
     {
         private readonly object[] _arguments;
 
@@ -48,14 +48,14 @@ namespace Sourcery
 
         private T _read;
 
-        object ISourcerer.ReadModel
+        object ISourcedObject.ReadModel
         {
             get { return ReadModel; }
         }
 
         public IEventStore EventStore { get; set; }
 
-        IEventStore ISourcerer.EventStore
+        IEventStore ISourcedObject.EventStore
         {
             get { return EventStore; }
         }
@@ -249,7 +249,7 @@ namespace Sourcery
     }
 
 
-    public interface ISourcerer<out T> : ISourcerer
+    public interface ISourcedObject<out T> : ISourcedObject
     {
         T ReadModel { get; }
 
