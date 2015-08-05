@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading;
-using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sourcery;
@@ -251,7 +250,6 @@ namespace Sourcery
 
     public interface ISourcedObject<out T> : ISourcedObject
     {
-        T ReadModel { get; }
-
+        new T ReadModel { get; }
     }
 }

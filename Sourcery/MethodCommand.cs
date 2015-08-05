@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using Expression = System.Linq.Expressions.Expression;
 
 namespace Sourcery
@@ -85,8 +84,6 @@ namespace Sourcery
         }
         
 
-
-        public object Context { get; set; }
 
 
         public MethodCommand()

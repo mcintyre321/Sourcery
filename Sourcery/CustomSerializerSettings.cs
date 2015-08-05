@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters;
 using Newtonsoft.Json;
@@ -32,9 +35,11 @@ namespace Sourcery
                 return jsonObjectContract;
             }
 
-            public InternalContractResolver()
+            protected override List<MemberInfo> GetSerializableMembers(Type objectType)
             {
-                this.DefaultMembersSearchFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                return
+                    (objectType).GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                        .ToList();
             }
         }
     }
