@@ -137,7 +137,7 @@ namespace Sourcery
                         Type = typeof(T).AssemblyQualifiedName,
                         Arguments = constructorArgs
                     };
-                    RunCtor(t, constructorArgs, command);
+                    command.Apply(t);
                     var initEvent = new SourceryEvent(0);
                     initEvent.SetContent(command);
                     session.Write(initEvent);
@@ -157,14 +157,7 @@ namespace Sourcery
             return t;
         }
 
-        private void RunCtor(T t, JObject args, CommandBase command)
-        {
-            var ctors = typeof (T).GetConstructors().OrderByDescending(c => c.GetParameters().Count());
-            var ctorAndArgs = ctors
-                .Select(c => new {ctor = c, args = MakeArray(c, args, command)})
-                .First(pair => pair.args != null);
-            ctorAndArgs.ctor.Invoke(t, ctorAndArgs.args);
-        }
+        
 
 
         private T Initialise(SourceryEvent @event)
@@ -181,32 +174,13 @@ namespace Sourcery
 
                 t = (T) FormatterServices.GetSafeUninitializedObject(type);
                 t.SetSourcerer(this);
-                RunCtor(t, init.Arguments, init);
+                init.Apply(t);
 
             }
             return t;
         }
 
-        private object[] MakeArray(ConstructorInfo constructorInfo, JObject arguments, CommandBase command)
-        {
-            var parameters = constructorInfo.GetParameters();
-
-            List<object> args = new List<object>();
-            foreach (var parameter in parameters)
-            {
-                if (parameter.ParameterType == command.GetType())
-                {
-                    args.Add(command);
-                    continue;
-                }
-                if (arguments[parameter.Name] == null) return null;
-                var token = arguments[parameter.Name];
-                var arg = token.ToObject(parameter.ParameterType, new CustomSerializerSettings());
-                args.Add(arg);
-            }
-            return args.ToArray();
-        }
-
+    
         private string ApplyMigrations(SourceryEvent @event, out bool changesMade, IEventStoreSession migrationsSession, bool isInit = false)
         {
             var json = @event.Content;
