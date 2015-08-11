@@ -15,6 +15,8 @@ namespace Sourcery.Tests
     [TestFixture]
     public class SourcererTests
     {
+        private string _bookName = "Catch 22";
+
         public class Egg
         {
             public bool IsCracked { get; set; }
@@ -79,13 +81,13 @@ namespace Sourcery.Tests
         {
             var fac = new InMemEventStoreFactory();
             var db = new SourceryDb(fac.Get);
-            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy));
+            var sourcerer = db.Get<Book>("Book", () => new Book(_bookName, Book.BookTypes.WarComedy));
 
-            Assert.AreEqual("Catch 22", sourcerer.ReadModel.Title);
+            Assert.AreEqual(_bookName, sourcerer.ReadModel.Title);
 
 
             var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
-            Assert.AreEqual("Catch 22", sourcerer2.ReadModel.Title);
+            Assert.AreEqual(_bookName, sourcerer2.ReadModel.Title);
         }
  
         [Test]
@@ -93,7 +95,7 @@ namespace Sourcery.Tests
         {
             var fac = new InMemEventStoreFactory();
             var db = new SourceryDb(fac.Get);
-            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy, null as InitCommand));
+            var sourcerer = db.Get<Book>("Book", () => new Book(_bookName, Book.BookTypes.WarComedy, null as InitCommand));
             Assert.NotNull(sourcerer.ReadModel.Created);
 
             var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");

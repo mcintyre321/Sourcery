@@ -60,7 +60,7 @@ namespace Sourcery
 
         public ISourcedObject<T> Get<T>(string objectid = null, Expression<Func<T>> construct = null, Action<T> onRebuild = null) where T : class
         {
-            objectid = objectid ?? NameHelper.Dasherize(typeof (T).Name).ToLowerInvariant();
+            objectid = objectid ?? NameHelper.Dasherize(typeof (T).Name);
             return (ISourcedObject<T>)sourcerers.GetOrAdd(objectid, (s) => new SourcedObject<T>(GetEventStore(s), new ConstructorArgs<T>(construct).Value, Migrations, onRebuild));
         }
         
@@ -90,7 +90,7 @@ namespace Sourcery
 
     public class NameHelper
     {
-        public static void Dasherize(string name)
+        public static string Dasherize(string name)
         {
             var sb = new StringBuilder();
             for (int index = 0; index < name.Length; index++)
@@ -107,6 +107,7 @@ namespace Sourcery
                 }
 
             }
+            return sb.ToString();
         }
     }
 }
