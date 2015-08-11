@@ -64,7 +64,14 @@ namespace Sourcery.Tests
                 BookType = bookType;
                 Id = gw.Execute("Id", () => Guid.NewGuid().ToString());
             }
+            public Book(string title, BookTypes bookType, InitCommand command)
+            {
+                Title = title;
+                BookType = bookType;
+                Created = command.Timestamp;
+            }
 
+            public DateTimeOffset? Created { get; set; }
         }
 
         [Test]
@@ -80,17 +87,17 @@ namespace Sourcery.Tests
             var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
             Assert.AreEqual("Catch 22", sourcerer2.ReadModel.Title);
         }
+ 
         [Test]
-        public void CanPersistAnObjectWithAConstructorWhichUsesTheGateway()
+        public void CanPersistAnObjectWithAConstructorWhichUsesTheCommand()
         {
             var fac = new InMemEventStoreFactory();
             var db = new SourceryDb(fac.Get);
-            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy, null));
-            var id = sourcerer.ReadModel.Id;
-            Assert.False(string.IsNullOrWhiteSpace(sourcerer.ReadModel.Id), "Id was not generated");
+            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy, null as InitCommand));
+            Assert.NotNull(sourcerer.ReadModel.Created);
 
             var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
-            Assert.AreEqual(id, sourcerer2.ReadModel.Id);
+            Assert.NotNull(sourcerer2.ReadModel.Created);
         }
 
         [Test]

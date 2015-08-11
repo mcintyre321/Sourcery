@@ -43,25 +43,24 @@ namespace Sourcery
             }
         }
 
-        private static JsonSerializer serializer = JsonSerializer.Create(new CustomSerializerSettings());
-
         public T Execute<T>(string key, Func<T> a)
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new InvalidOperationException("Must provide identifier to gateway so logged command has context");
+            var serializer1 = JsonSerializer.Create(new CustomSerializerSettings());
             if (ResultCounter == null)
             {
                 var existing = Results[key];
                 if (existing != null) return existing.ToObject<T>();
                 var o = a();
-                Results.Add(key, o == null ? null : JToken.FromObject(o, serializer));
+                Results.Add(key, o == null ? null : JToken.FromObject(o, serializer1));
                 return o;
             }
             else
             {
                 var data = Results[key];
 
-                var foundValue = data.ToObject<T>(serializer);
+                var foundValue = data.ToObject<T>(serializer1);
 
                 return foundValue;
             }

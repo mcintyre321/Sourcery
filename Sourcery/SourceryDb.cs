@@ -29,7 +29,7 @@ namespace Sourcery
                 var ctor = newExpression.Constructor;
                 var paramsAndArg = ctor.GetParameters().Zip(newExpression.Arguments, Tuple.Create);
                 var dict = paramsAndArg.ToDictionary(tup => tup.Item1.Name,
-                    tup => ((ConstantExpression) tup.Item2).Value);
+                    tup => ExpressionHelper.GetValueFromExpression(tup.Item2));
                 this.Value = (JObject.FromObject(dict));
             }
         }

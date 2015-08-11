@@ -74,6 +74,7 @@
     <Compile Include="EventStores\DirectoryEventStoreSession.cs" />
     <Compile Include="EventStores\SourceryEvent.cs" />
     <Compile Include="EventStores\IEventStoreSession.cs" />
+    <Compile Include="ExpressionHelper.cs" />
     <Compile Include="GatewayMismatchException.cs" />
     <Compile Include="Helpers\PushScope.cs" />
     <Compile Include="InitCommand.cs" />

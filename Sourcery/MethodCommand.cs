@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Expression = System.Linq.Expressions.Expression;
 
 namespace Sourcery
 {
@@ -20,7 +19,7 @@ namespace Sourcery
             var mce = (MethodCallExpression)exp.Body;
 
             var args = mce.Arguments
-                .Select(GetValueFromExpression)
+                .Select(ExpressionHelper.GetValueFromExpression)
                 .ToArray();
 
             var path = new List<string>();
@@ -38,7 +37,7 @@ namespace Sourcery
             var mce = (MethodCallExpression)exp.Body;
 
             var args = mce.Arguments
-                .Select(GetValueFromExpression)
+                .Select(ExpressionHelper.GetValueFromExpression)
                 .ToArray();
 
             var path = new List<string>();
@@ -53,21 +52,7 @@ namespace Sourcery
         }
 
 
-        static object GetValueFromExpression(Expression exp)
-        {
-            var constant = exp as ConstantExpression;
-            if (constant != null)
-            {
-                return constant.Value;
-            }
-            var memberAccess = exp as MemberExpression;
-            if (memberAccess != null)
-            {
-                var constantSelector = (ConstantExpression)memberAccess.Expression;
-                return ((dynamic)memberAccess.Member).GetValue(constantSelector.Value);
-            }
-            throw new NotImplementedException();
-        }
+       
         public MethodCommand(Type type, string methodName, object[] arguments, string[] path, DateTimeOffset now, Gateway gateway)
             : this(type.AssemblyQualifiedName, methodName, arguments, path, now, gateway)
         {

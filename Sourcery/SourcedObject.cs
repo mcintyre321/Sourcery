@@ -132,13 +132,14 @@ namespace Sourcery
                 {
                     t = (T) FormatterServices.GetSafeUninitializedObject(typeof (T));
                     t.SetSourcerer(this);
-                    RunCtor(gateway, t, constructorArgs);
-                    var initEvent = new SourceryEvent(0);
-                    initEvent.SetContent(new InitCommand(gateway)
+                    var command = new InitCommand(gateway)
                     {
-                        Type = typeof (T).AssemblyQualifiedName,
+                        Type = typeof(T).AssemblyQualifiedName,
                         Arguments = constructorArgs
-                    });
+                    };
+                    RunCtor(t, constructorArgs, command);
+                    var initEvent = new SourceryEvent(0);
+                    initEvent.SetContent(command);
                     session.Write(initEvent);
                     changesMade = true;
                 }
@@ -156,11 +157,11 @@ namespace Sourcery
             return t;
         }
 
-        private void RunCtor(Gateway gateway, T t, JObject args)
+        private void RunCtor(T t, JObject args, CommandBase command)
         {
             var ctors = typeof (T).GetConstructors().OrderByDescending(c => c.GetParameters().Count());
             var ctorAndArgs = ctors
-                .Select(c => new {ctor = c, args = MakeArray(c, args, gateway)})
+                .Select(c => new {ctor = c, args = MakeArray(c, args, command)})
                 .First(pair => pair.args != null);
             ctorAndArgs.ctor.Invoke(t, ctorAndArgs.args);
         }
@@ -180,22 +181,22 @@ namespace Sourcery
 
                 t = (T) FormatterServices.GetSafeUninitializedObject(type);
                 t.SetSourcerer(this);
-                RunCtor(init.Gateway, t, init.Arguments);
+                RunCtor(t, init.Arguments, init);
 
             }
             return t;
         }
 
-        private object[] MakeArray(ConstructorInfo constructorInfo, JObject arguments, Gateway gw)
+        private object[] MakeArray(ConstructorInfo constructorInfo, JObject arguments, CommandBase command)
         {
             var parameters = constructorInfo.GetParameters();
 
             List<object> args = new List<object>();
             foreach (var parameter in parameters)
             {
-                if (parameter.ParameterType == typeof (Gateway))
+                if (parameter.ParameterType == command.GetType())
                 {
-                    args.Add(gw);
+                    args.Add(command);
                     continue;
                 }
                 if (arguments[parameter.Name] == null) return null;
