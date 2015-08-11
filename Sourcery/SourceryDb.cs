@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Humanizer;
+using System.Text;
+using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sourcery.EventStores;
@@ -59,7 +60,7 @@ namespace Sourcery
 
         public ISourcedObject<T> Get<T>(string objectid = null, Expression<Func<T>> construct = null, Action<T> onRebuild = null) where T : class
         {
-            objectid = objectid ?? typeof (T).Name.Dasherize().ToLowerInvariant();
+            objectid = objectid ?? NameHelper.Dasherize(typeof (T).Name).ToLowerInvariant();
             return (ISourcedObject<T>)sourcerers.GetOrAdd(objectid, (s) => new SourcedObject<T>(GetEventStore(s), new ConstructorArgs<T>(construct).Value, Migrations, onRebuild));
         }
         
@@ -84,6 +85,28 @@ namespace Sourcery
         public void Delete(string objectId)
         {
             GetEventStore(objectId).Delete();
+        }
+    }
+
+    public class NameHelper
+    {
+        public static void Dasherize(string name)
+        {
+            var sb = new StringBuilder();
+            for (int index = 0; index < name.Length; index++)
+            {
+                var c = name[index];
+                if (index != 0 && index != name.Length - 1 && Char.IsUpper(c))
+                {
+                    sb.Append('-');
+                    sb.Append(Char.ToLower(c));
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+
+            }
         }
     }
 }
