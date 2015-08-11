@@ -31,7 +31,7 @@ namespace Sourcery
                 propertyExpression = propertyExpression.Expression as MemberExpression;
             }
 
-            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name, args, path.ToArray());
+            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name, args, path.ToArray(), DateTimeOffset.UtcNow, new Gateway());
         }
         public static MethodCommand CreateFromLambda<T, TOut>(Expression<Func<T, TOut>> exp, object context = null)
         {
@@ -49,7 +49,7 @@ namespace Sourcery
                 propertyExpression = propertyExpression.Expression as MemberExpression;
             }
 
-            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name , args, path.ToArray() );
+            return new MethodCommand(mce.Method.DeclaringType, mce.Method.Name , args, path.ToArray(), DateTimeOffset.UtcNow, new Gateway());
         }
 
 
@@ -68,19 +68,18 @@ namespace Sourcery
             }
             throw new NotImplementedException();
         }
-        public MethodCommand(Type type, string methodName, object[] arguments, string[] path, object context = null)
-            : this(type.AssemblyQualifiedName, methodName, arguments, path, context)
+        public MethodCommand(Type type, string methodName, object[] arguments, string[] path, DateTimeOffset now, Gateway gateway)
+            : this(type.AssemblyQualifiedName, methodName, arguments, path, now, gateway)
         {
         }
 
-        public MethodCommand(string typeName, string methodName, object[] arguments, string[] path, object context = null)
-            : base(DateTimeOffset.UtcNow, Gateway.Current)
+        public MethodCommand(string typeName, string methodName, object[] arguments, string[] path, DateTimeOffset now, Gateway gateway)
+            : base(now, gateway)
         {
             TypeName = typeName;
             MethodName = methodName;
             Arguments = arguments;
             Path = path;
-            this.Context = context;
         }
         
 

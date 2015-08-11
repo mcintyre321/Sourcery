@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -16,11 +17,11 @@ namespace Sourcery
 
     public class SourcedObject<T> : ISourcedObject<T> where T : class
     {
-        private readonly object[] _arguments;
+        private readonly JObject constructorArgs;
 
-        public SourcedObject(IEventStore eventStore, object[] arguments = null, MigrationsLibrary migrations = null, Action<T> onRebuild = null)
+        public SourcedObject(IEventStore eventStore, JObject arguments = null, MigrationsLibrary migrations = null, Action<T> onRebuild = null)
         {
-            _arguments = arguments ?? new object[] {};
+            constructorArgs = arguments ?? new JObject();
             Migrations = migrations ?? new CodeMigrationsLibrary(Assembly.GetCallingAssembly());
             OnRebuild = onRebuild;
             
@@ -38,27 +39,19 @@ namespace Sourcery
 
         public MigrationsLibrary Migrations { get; set; }
 
-        public string Id
-        {
-            get { return EventStore.Id; }
-        }
+        public string Id => EventStore.Id;
 
         public ReaderWriterLockSlim Lock { get; private set; }
 
 
         private T _read;
 
-        object ISourcedObject.ReadModel
-        {
-            get { return ReadModel; }
-        }
+        object ISourcedObject.ReadModel => ReadModel;
+        IEventStore ISourcedObject.EventStore => EventStore;
+
 
         public IEventStore EventStore { get; set; }
 
-        IEventStore ISourcedObject.EventStore
-        {
-            get { return EventStore; }
-        }
 
 
         public T ReadModel
@@ -135,14 +128,17 @@ namespace Sourcery
 
             if (t == null) //there must have been no events
             {
-                using (new PushScope<Gateway>(Gateway.Stack, new Gateway()))
+                var gateway = new Gateway();
                 {
                     t = (T) FormatterServices.GetSafeUninitializedObject(typeof (T));
                     t.SetSourcerer(this);
-                    var ctor = typeof (T).GetConstructors().Single(c => MatchesArguments(c, _arguments));
-                    ctor.Invoke(t, _arguments);
+                    RunCtor(gateway, t, constructorArgs);
                     var initEvent = new SourceryEvent(0);
-                    initEvent.SetContent(new InitCommand(Gateway.Current) {Type = typeof (T).AssemblyQualifiedName, Arguments = new JArray(_arguments ?? new object[] {})});
+                    initEvent.SetContent(new InitCommand(gateway)
+                    {
+                        Type = typeof (T).AssemblyQualifiedName,
+                        Arguments = constructorArgs
+                    });
                     session.Write(initEvent);
                     changesMade = true;
                 }
@@ -160,14 +156,13 @@ namespace Sourcery
             return t;
         }
 
-        private bool MatchesArguments(ConstructorInfo constructorInfo, object[] arguments)
+        private void RunCtor(Gateway gateway, T t, JObject args)
         {
-            var parameters = constructorInfo.GetParameters();
-            if (parameters.Length == arguments.Length) //should do type check here
-            {
-                return true;
-            }
-            return false;
+            var ctors = typeof (T).GetConstructors().OrderByDescending(c => c.GetParameters().Count());
+            var ctorAndArgs = ctors
+                .Select(c => new {ctor = c, args = MakeArray(c, args, gateway)})
+                .First(pair => pair.args != null);
+            ctorAndArgs.ctor.Invoke(t, ctorAndArgs.args);
         }
 
 
@@ -177,30 +172,38 @@ namespace Sourcery
 
 
             var init = (InitCommand) @event.GetCommand();
-            using (new PushScope<Gateway>(Gateway.Stack, init.Gateway))
             {
-                Gateway.Current.ResultCounter = 0;
+                init.Gateway.ResultCounter = 0;
 
                 var type = typeof (T);
-                var ctorAndArgs = type.GetConstructors().Select(c => new {ctor = c, args = MakeArray(c, init.Arguments)}).Single(ca => MatchesArguments(ca.ctor, ca.args));
-
+                 
 
                 t = (T) FormatterServices.GetSafeUninitializedObject(type);
                 t.SetSourcerer(this);
-                ctorAndArgs.ctor.Invoke(t, ctorAndArgs.args);
+                RunCtor(init.Gateway, t, init.Arguments);
 
             }
             return t;
         }
 
-        private object[] MakeArray(ConstructorInfo constructorInfo, JArray arguments)
+        private object[] MakeArray(ConstructorInfo constructorInfo, JObject arguments, Gateway gw)
         {
             var parameters = constructorInfo.GetParameters();
-            if (parameters.Length != arguments.Count)
+
+            List<object> args = new List<object>();
+            foreach (var parameter in parameters)
             {
-                return null;
+                if (parameter.ParameterType == typeof (Gateway))
+                {
+                    args.Add(gw);
+                    continue;
+                }
+                if (arguments[parameter.Name] == null) return null;
+                var token = arguments[parameter.Name];
+                var arg = token.ToObject(parameter.ParameterType, new CustomSerializerSettings());
+                args.Add(arg);
             }
-            return parameters.Zip(arguments, (info, token) => token.ToObject(info.ParameterType, new CustomSerializerSettings())).ToArray();
+            return args.ToArray();
         }
 
         private string ApplyMigrations(SourceryEvent @event, out bool changesMade, IEventStoreSession migrationsSession, bool isInit = false)

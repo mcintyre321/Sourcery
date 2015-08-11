@@ -6,8 +6,6 @@ namespace Sourcery
     public abstract class CommandBase
     {
         public DateTimeOffset Timestamp { get; set; }
-        public int _version { get; set; }
-        public object Context { get; set; }
         public CommandBase(DateTimeOffset timestamp, Gateway gateway)
             : this()
         {
@@ -21,18 +19,12 @@ namespace Sourcery
         }
         public Gateway Gateway { get; set; }
 
-        public virtual string ShortDescriptionForFilename
-        {
-            get { return ""; }
-        }
+        public virtual string ShortDescriptionForFilename => "";
 
 
         public object Apply(object target)
         {
-            using (new PushScope<Gateway>(Gateway.Stack, this.Gateway))
-            {
-                return Invoke(target);
-            }
+            return Invoke(target);
         }
 
         protected abstract object Invoke(object target);

@@ -17,7 +17,7 @@ namespace Sourcery
             return null;
         }
 
-        public JArray Arguments { get; set; }
+        public JObject Arguments { get; set; }
 
         
     }

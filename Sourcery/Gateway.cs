@@ -11,17 +11,7 @@ namespace Sourcery
 
     public class Gateway
     {
-        public static AsyncLocal<Stack<Gateway>> Stack { get; } = new AsyncLocal<Stack<Gateway>>();
          
-
-        public static Gateway Current { get { return Stack.Value.Peek(); } }
-
-        [JsonIgnore]
-        Hashtable Cache { get; set; }
-        public T TryGetFromCache<T>(string key, Func<T> create)
-        {
-            return (T) (Cache[key] ?? (T) (Cache[key] = create()));
-        }
 
 
         public JObject Results { get; set; }
@@ -29,7 +19,6 @@ namespace Sourcery
         public Gateway()
         {
             Results = new JObject();
-            Cache = new Hashtable();
         }
 
         public void ExecuteVoid(Action a)

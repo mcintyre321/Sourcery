@@ -50,12 +50,21 @@ namespace Sourcery.Tests
             }
             public string Title { get; private set; }
             public BookTypes BookType { get; private set; }
+            public string Id { get; set; }
 
             public Book(string title, BookTypes bookType)
             {
                 Title = title;
                 BookType = bookType;
             }
+
+            public Book(string title, BookTypes bookType, Gateway gw)
+            {
+                Title = title;
+                BookType = bookType;
+                Id = gw.Execute("Id", () => Guid.NewGuid().ToString());
+            }
+
         }
 
         [Test]
@@ -63,7 +72,7 @@ namespace Sourcery.Tests
         {
             var fac = new InMemEventStoreFactory();
             var db = new SourceryDb(fac.Get);
-            var sourcerer = db.Get<Book>("Book", new object[] { "Catch 22", Book.BookTypes.WarComedy });
+            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy));
 
             Assert.AreEqual("Catch 22", sourcerer.ReadModel.Title);
 
@@ -71,18 +80,18 @@ namespace Sourcery.Tests
             var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
             Assert.AreEqual("Catch 22", sourcerer2.ReadModel.Title);
         }
+        [Test]
+        public void CanPersistAnObjectWithAConstructorWhichUsesTheGateway()
+        {
+            var fac = new InMemEventStoreFactory();
+            var db = new SourceryDb(fac.Get);
+            var sourcerer = db.Get<Book>("Book", () => new Book("Catch 22", Book.BookTypes.WarComedy, null));
+            var id = sourcerer.ReadModel.Id;
+            Assert.False(string.IsNullOrWhiteSpace(sourcerer.ReadModel.Id), "Id was not generated");
 
-
-        //CustomSerializerSettings settings = new CustomSerializerSettings();
-
-        //[Test]
-        //public void DeserializeSomethingThatNoLongerExists()
-        //{
-        //    var text = File.ReadAllText(@"D:\projects\Sourcery\Sourcery.Tests\bin\Debug\App_Data\Eggs\634700078771969235.json");
-        //    var json = JObject.Parse(text);
-        //    var command = JsonConvert.DeserializeObject<EditableLambdaExpression>(json["Action"].ToString(), settings);
-
-        //}
+            var sourcerer2 = new SourceryDb(fac.Get).Get<Book>("Book");
+            Assert.AreEqual(id, sourcerer2.ReadModel.Id);
+        }
 
         [Test]
         public void ReturnsNullWhenNoObjectIdMatch()
